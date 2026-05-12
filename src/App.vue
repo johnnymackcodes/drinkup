@@ -245,7 +245,7 @@ function shareLink() {
             <div class="item-title">
               {{ result.mixers }} bottle{{ result.mixers === 1 ? '' : 's' }} of mixers
             </div>
-            <div class="item-detail">soda, tonic, juice — 1 L each</div>
+            <div class="item-detail">soda, tonic, juice — 2 L each</div>
           </div>
         </li>
 

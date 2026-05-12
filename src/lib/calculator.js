@@ -23,8 +23,9 @@ export function calculate({ guests, hours, presetKey, drinkerPct, strength, cust
   const wineWhite = wineBottles - wineRed;
 
   const liquorBottles = Math.ceil(liquorDrinks / SERVINGS.liquorPerBottle);
-  // Mixer rule: ~1.5 bottles of mixer per bottle of liquor.
-  const mixerBottles = liquorBottles === 0 ? 0 : Math.max(1, Math.ceil(liquorBottles * 1.5));
+  // Mixer rule: ~1 bottle (2 L) of mixer per bottle of liquor.
+  // A 750 mL spirit makes ~16 cocktails × ~4 oz mixer ≈ 64 oz ≈ one 2 L bottle.
+  const mixerBottles = liquorBottles === 0 ? 0 : Math.max(1, Math.ceil(liquorBottles * 1.0));
 
   // Non-alcoholic: 2 servings/hr for non-drinkers, 0.5/hr for drinkers (hydration).
   // One 2 L bottle ≈ 8 servings.

@@ -63,12 +63,18 @@ export const SERVINGS = {
   liquorPerBottle: 16,
 };
 
-// Rough mid-tier US retail prices (USD). Easy to tweak.
+// Mid-tier US retail prices (USD), sourced from 2026 averages.
+//   beer 24-pack domestic ~ $20–22 (BLS / state avgs)
+//   wine 750 mL table     ~ $10–15 (BLS, $10.70/750mL)
+//   spirits 750 mL        ~ $22–25 (Tito's $22, mid whiskey $25–28)
+//   mixers 2 L            ~ $2.50–3.50 (FRED $2.20 soda avg; tonic ~$3)
+//   ice 10 lb bag         ~ $2.50–3.99
+//   16 oz Solo cup        ~ $0.15–0.25
 export const PRICES = {
-  beerCase: 25,
-  wineBottle: 15,
-  liquorBottle: 25,
-  mixerBottle: 4,
-  iceBag: 4,
-  cup: 0.1,
+  beerCase: 22,
+  wineBottle: 12,
+  liquorBottle: 24,
+  mixerBottle: 3,
+  iceBag: 3,
+  cup: 0.2,
 };
