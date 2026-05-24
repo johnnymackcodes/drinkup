@@ -1,5 +1,5 @@
 <script setup>
-import { computed, reactive, watch, onMounted } from 'vue';
+import { computed, reactive, ref, watch, onMounted } from 'vue';
 import { PRESETS } from './lib/presets.js';
 import { calculate } from './lib/calculator.js';
 
@@ -10,6 +10,7 @@ const state = reactive({
   drinkerPct: 90,
   strength: 1.0,
 });
+const shareStatus = ref('');
 
 // Restore from URL on load so shared links work.
 onMounted(() => {
@@ -32,6 +33,11 @@ const preset = computed(() => PRESETS[state.presetKey]);
 const result = computed(() => calculate(state));
 
 const presetEntries = Object.entries(PRESETS);
+const strengthOptions = [
+  { label: 'Light', value: 0.75 },
+  { label: 'Normal', value: 1.0 },
+  { label: 'Heavy', value: 1.25 },
+];
 
 const strengthLabel = computed(() => {
   if (state.strength <= 0.85) return 'Light';
@@ -48,6 +54,25 @@ const mixPercent = computed(() => ({
 function shareLink() {
   const url = window.location.href;
   navigator.clipboard?.writeText(url);
+  shareStatus.value = 'Shareable link copied to clipboard.';
+}
+
+function selectPreset(key) {
+  state.presetKey = key;
+}
+
+function movePreset(currentIndex, direction) {
+  const nextIndex = (currentIndex + direction + presetEntries.length) % presetEntries.length;
+  state.presetKey = presetEntries[nextIndex][0];
+}
+
+function selectStrength(value) {
+  state.strength = value;
+}
+
+function moveStrength(currentIndex, direction) {
+  const nextIndex = (currentIndex + direction + strengthOptions.length) % strengthOptions.length;
+  state.strength = strengthOptions[nextIndex].value;
 }
 </script>
 
@@ -65,7 +90,7 @@ function shareLink() {
     <!-- LEFT: form -->
     <section class="card form">
       <div class="field">
-        <label>How many guests?</label>
+        <label id="guests-label">How many guests?</label>
         <div class="row">
           <input
             type="range"
@@ -73,6 +98,8 @@ function shareLink() {
             max="200"
             step="1"
             v-model.number="state.guests"
+            aria-labelledby="guests-label"
+            :aria-valuetext="`${state.guests} guests`"
           />
           <input
             type="number"
@@ -80,12 +107,13 @@ function shareLink() {
             max="1000"
             v-model.number="state.guests"
             class="num"
+            aria-label="Number of guests"
           />
         </div>
       </div>
 
       <div class="field">
-        <label>How long? <span class="unit">hours</span></label>
+        <label id="hours-label">How long? <span class="unit">hours</span></label>
         <div class="row">
           <input
             type="range"
@@ -93,6 +121,8 @@ function shareLink() {
             max="12"
             step="0.5"
             v-model.number="state.hours"
+            aria-labelledby="hours-label"
+            :aria-valuetext="`${state.hours} hours`"
           />
           <input
             type="number"
@@ -101,22 +131,31 @@ function shareLink() {
             step="0.5"
             v-model.number="state.hours"
             class="num"
+            aria-label="Number of hours"
           />
         </div>
       </div>
 
       <div class="field">
-        <label>What kind of event?</label>
-        <div class="presets">
+        <label id="event-kind-label">What kind of event?</label>
+        <div class="presets" role="radiogroup" aria-labelledby="event-kind-label">
           <button
-            v-for="[key, p] in presetEntries"
+            v-for="([key, p], index) in presetEntries"
             :key="key"
             type="button"
             class="preset"
+            role="radio"
             :class="{ active: state.presetKey === key }"
-            @click="state.presetKey = key"
+            :aria-checked="state.presetKey === key"
+            @click="selectPreset(key)"
+            @keydown.left.prevent="movePreset(index, -1)"
+            @keydown.up.prevent="movePreset(index, -1)"
+            @keydown.right.prevent="movePreset(index, 1)"
+            @keydown.down.prevent="movePreset(index, 1)"
+            @keydown.enter.prevent="selectPreset(key)"
+            @keydown.space.prevent="selectPreset(key)"
           >
-            <span class="preset-emoji">{{ p.emoji }}</span>
+            <span class="preset-emoji" aria-hidden="true">{{ p.emoji }}</span>
             <span class="preset-name">{{ p.name }}</span>
           </button>
         </div>
@@ -124,7 +163,7 @@ function shareLink() {
       </div>
 
       <div class="field">
-        <label>
+        <label id="drinkers-label">
           Of your guests, what % actually drink?
           <span class="unit">{{ state.drinkerPct }}%</span>
         </label>
@@ -134,34 +173,32 @@ function shareLink() {
           max="100"
           step="5"
           v-model.number="state.drinkerPct"
+          aria-labelledby="drinkers-label"
+          :aria-valuetext="`${state.drinkerPct}% of guests drink`"
         />
       </div>
 
       <div class="field">
-        <label>
+        <label id="strength-label">
           Pour strength <span class="unit">{{ strengthLabel }}</span>
         </label>
-        <div class="strength">
+        <div class="strength" role="radiogroup" aria-labelledby="strength-label">
           <button
+            v-for="(option, index) in strengthOptions"
+            :key="option.value"
             type="button"
-            :class="{ active: state.strength === 0.75 }"
-            @click="state.strength = 0.75"
+            role="radio"
+            :class="{ active: state.strength === option.value }"
+            :aria-checked="state.strength === option.value"
+            @click="selectStrength(option.value)"
+            @keydown.left.prevent="moveStrength(index, -1)"
+            @keydown.up.prevent="moveStrength(index, -1)"
+            @keydown.right.prevent="moveStrength(index, 1)"
+            @keydown.down.prevent="moveStrength(index, 1)"
+            @keydown.enter.prevent="selectStrength(option.value)"
+            @keydown.space.prevent="selectStrength(option.value)"
           >
-            Light
-          </button>
-          <button
-            type="button"
-            :class="{ active: state.strength === 1.0 }"
-            @click="state.strength = 1.0"
-          >
-            Normal
-          </button>
-          <button
-            type="button"
-            :class="{ active: state.strength === 1.25 }"
-            @click="state.strength = 1.25"
-          >
-            Heavy
+            {{ option.label }}
           </button>
         </div>
       </div>
@@ -203,7 +240,7 @@ function shareLink() {
 
       <ul class="shopping">
         <li v-if="result.beer.cases > 0" class="item beer">
-          <div class="item-icon">🍺</div>
+          <div class="item-icon" aria-hidden="true">🍺</div>
           <div class="item-body">
             <div class="item-title">
               {{ result.beer.cases }} case{{ result.beer.cases === 1 ? '' : 's' }} of beer
@@ -215,7 +252,7 @@ function shareLink() {
         </li>
 
         <li v-if="result.wine.bottles > 0" class="item wine">
-          <div class="item-icon">🍷</div>
+          <div class="item-icon" aria-hidden="true">🍷</div>
           <div class="item-body">
             <div class="item-title">
               {{ result.wine.bottles }} bottle{{ result.wine.bottles === 1 ? '' : 's' }} of wine
@@ -228,7 +265,7 @@ function shareLink() {
         </li>
 
         <li v-if="result.liquor.bottles > 0" class="item liquor">
-          <div class="item-icon">🥃</div>
+          <div class="item-icon" aria-hidden="true">🥃</div>
           <div class="item-body">
             <div class="item-title">
               {{ result.liquor.bottles }} bottle{{ result.liquor.bottles === 1 ? '' : 's' }} of liquor
@@ -240,7 +277,7 @@ function shareLink() {
         </li>
 
         <li v-if="result.mixers > 0" class="item extra">
-          <div class="item-icon">🥤</div>
+          <div class="item-icon" aria-hidden="true">🥤</div>
           <div class="item-body">
             <div class="item-title">
               {{ result.mixers }} bottle{{ result.mixers === 1 ? '' : 's' }} of mixers
@@ -250,7 +287,7 @@ function shareLink() {
         </li>
 
         <li v-if="result.nonAlc > 0" class="item na">
-          <div class="item-icon">💧</div>
+          <div class="item-icon" aria-hidden="true">💧</div>
           <div class="item-body">
             <div class="item-title">
               {{ result.nonAlc }} bottle{{ result.nonAlc === 1 ? '' : 's' }} non-alcoholic
@@ -260,7 +297,7 @@ function shareLink() {
         </li>
 
         <li class="item extra">
-          <div class="item-icon">🧊</div>
+          <div class="item-icon" aria-hidden="true">🧊</div>
           <div class="item-body">
             <div class="item-title">
               {{ result.ice }} bag{{ result.ice === 1 ? '' : 's' }} of ice
@@ -270,7 +307,7 @@ function shareLink() {
         </li>
 
         <li class="item extra">
-          <div class="item-icon">🥤</div>
+          <div class="item-icon" aria-hidden="true">🥤</div>
           <div class="item-body">
             <div class="item-title">{{ result.cups }} cups</div>
             <div class="item-detail">3 per guest</div>
@@ -279,7 +316,10 @@ function shareLink() {
       </ul>
 
       <div class="footer-row">
-        <button class="share" @click="shareLink">📋 Copy shareable link</button>
+        <button class="share" @click="shareLink">
+          <span aria-hidden="true">📋</span> Copy shareable link
+        </button>
+        <p class="sr-only" role="status" aria-live="polite">{{ shareStatus }}</p>
       </div>
     </section>
   </main>
@@ -399,6 +439,11 @@ input[type='range']::-moz-range-thumb {
   border-radius: 50%;
   cursor: pointer;
   border: 3px solid var(--bg-card);
+}
+button:focus-visible,
+input:focus-visible {
+  outline: 3px solid var(--accent-soft);
+  outline-offset: 3px;
 }
 
 .presets {
@@ -591,6 +636,18 @@ input[type='range']::-moz-range-thumb {
 .share:hover {
   color: var(--text);
   border-color: var(--accent);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .foot {
